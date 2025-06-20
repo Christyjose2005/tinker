@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-const TARGET_TIME = 1800; // 30 minutes in seconds
+const TARGET_TIME = 1800;
 
 const StudyTracker = () => {
   const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem("tasks");
-    return savedTasks ? JSON.parse(savedTasks) : [];
+    const saved = localStorage.getItem("tasks");
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [taskName, setTaskName] = useState("");
   const [taskNotes, setTaskNotes] = useState("");
   const [taskDueDate, setTaskDueDate] = useState("");
@@ -16,6 +17,7 @@ const StudyTracker = () => {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [sortOption, setSortOption] = useState("priority");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const intervalRefs = useRef({});
 
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -23,84 +25,64 @@ const StudyTracker = () => {
 
   const addTask = () => {
     if (taskName.trim() === "") return;
-    setTasks([
-      ...tasks,
-      {
-        name: taskName,
-        notes: taskNotes,
-        dueDate: taskDueDate,
-        priority: taskPriority,
-        timeSpent: 0,
-        completed: false,
-        timer: null,
-      },
-    ]);
+    const newTask = {
+      name: taskName,
+      notes: taskNotes,
+      dueDate: taskDueDate,
+      priority: taskPriority,
+      timeSpent: 0,
+      completed: false,
+    };
+    setTasks([...tasks, newTask]);
     setTaskName("");
     setTaskNotes("");
     setTaskDueDate("");
     setTaskPriority("Medium");
   };
 
-const toggleComplete = (index) => {
-  setTasks(
-    tasks.map((task, i) =>
+  const toggleComplete = (index) => {
+    setTasks(tasks.map((task, i) => (
       i === index ? { ...task, completed: !task.completed } : task
-    )
-  );
-};
+    )));
+  };
 
   const startTimer = (index) => {
-    setTasks(
-      tasks.map((task, i) =>
-        i === index
-          ? { ...task, timer: setInterval(() => updateTime(i), 1000) }
-          : task
-      )
-    );
+    if (intervalRefs.current[index]) return; // already running
+
+    intervalRefs.current[index] = setInterval(() => {
+      setTasks((prev) =>
+        prev.map((task, i) =>
+          i === index
+            ? { ...task, timeSpent: task.timeSpent + 1 }
+            : task
+        )
+      );
+    }, 1000);
   };
 
   const stopTimer = (index) => {
-    clearInterval(tasks[index].timer);
-    setTasks(
-      tasks.map((task, i) =>
-        i === index ? { ...task, timer: null } : task
-      )
-    );
-  };
-
-  const updateTime = (index) => {
-    setTasks(
-      tasks.map((task, i) =>
-        i === index ? { ...task, timeSpent: task.timeSpent + 1 } : task
-      )
-    );
+    clearInterval(intervalRefs.current[index]);
+    delete intervalRefs.current[index];
   };
 
   const deleteTask = (index) => {
+    stopTimer(index); // stop any running timer first
     setTaskToDelete(index);
     setConfirmDialogVisible(true);
   };
 
   const confirmDelete = () => {
     setTasks(tasks.filter((_, i) => i !== taskToDelete));
+    stopTimer(taskToDelete);
+    setTaskToDelete(null);
     setConfirmDialogVisible(false);
   };
 
-  const cancelDelete = () => {
-    setConfirmDialogVisible(false);
-  };
+  const cancelDelete = () => setConfirmDialogVisible(false);
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleSortChange = (e) => {
-    setSortOption(e.target.value);
-  };
-
-  const handleFilterChange = (e) => {
-    setSelectedFilter(e.target.value);
-  };
+  const handleSearch = (e) => setSearchQuery(e.target.value);
+  const handleSortChange = (e) => setSortOption(e.target.value);
+  const handleFilterChange = (e) => setSelectedFilter(e.target.value);
 
   const filteredTasks = tasks
     .filter((task) => task.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -120,14 +102,11 @@ const toggleComplete = (index) => {
 
   return (
     <div className="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 rounded-lg shadow-lg w-screen p-10">
-<h1 className="text-3xl font-bold mb-6 text-center" style={{ color: '#6B21A8' }}>
-  Study Tracker
-</h1>
-
-
+      <h1 className="text-3xl font-bold mb-6 text-center" style={{ color: '#6B21A8' }}>
+        Study Tracker
+      </h1>
 
       <input
-        type="text"
         value={searchQuery}
         onChange={handleSearch}
         placeholder="Search tasks..."
@@ -136,7 +115,6 @@ const toggleComplete = (index) => {
 
       <div className="flex flex-col gap-4 mb-6">
         <input
-          type="text"
           value={taskName}
           onChange={(e) => setTaskName(e.target.value)}
           className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -147,14 +125,13 @@ const toggleComplete = (index) => {
           onChange={(e) => setTaskNotes(e.target.value)}
           className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="Add notes"
-        ></textarea>
+        />
         <input
           type="date"
           value={taskDueDate}
           onChange={(e) => setTaskDueDate(e.target.value)}
           className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
-
         <select
           value={taskPriority}
           onChange={(e) => setTaskPriority(e.target.value)}
@@ -164,7 +141,6 @@ const toggleComplete = (index) => {
           <option value="Medium">Medium</option>
           <option value="High">High</option>
         </select>
-
         <button
           onClick={addTask}
           className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white p-3 rounded-lg hover:from-yellow-500 hover:to-yellow-700 transition duration-300"
@@ -174,7 +150,7 @@ const toggleComplete = (index) => {
       </div>
 
       <div className="mb-6">
-        <label className="text-gray-600 mr-2">Sort by: </label>
+        <label className="text-gray-600 mr-2">Sort by:</label>
         <select
           value={sortOption}
           onChange={handleSortChange}
@@ -186,7 +162,7 @@ const toggleComplete = (index) => {
       </div>
 
       <div className="mb-6">
-        <label className="text-gray-600 mr-2">Filter by: </label>
+        <label className="text-gray-600 mr-2">Filter by:</label>
         <select
           value={selectedFilter}
           onChange={handleFilterChange}
@@ -231,27 +207,12 @@ const toggleComplete = (index) => {
                 </button>
               </div>
             </div>
-
             {task.notes && <p className="text-gray-600">{task.notes}</p>}
             {task.dueDate && <p className="text-gray-600">Due: {task.dueDate}</p>}
             <p className="text-gray-600">Priority: {task.priority}</p>
             <p className="text-gray-600">Time Spent: {task.timeSpent} sec</p>
-
-            {/* ✅ Progress Bar */}
-            <div className="w-full bg-gray-300 rounded-full h-2.5">
-              <div
-                className="bg-green-500 h-2.5 rounded-full"
-                style={{
-                  width: `${Math.min((task.timeSpent / TARGET_TIME) * 100, 100)}%`,
-                }}
-              ></div>
-            </div>
-            <p className="text-sm text-gray-600">
-              {Math.min(task.timeSpent, TARGET_TIME)} / {TARGET_TIME} seconds
-            </p>
-
             <div className="flex gap-3">
-              {!task.timer ? (
+              {!intervalRefs.current[index] ? (
                 <button
                   onClick={() => startTimer(index)}
                   className="bg-blue-500 text-black py-2 px-4 rounded-lg hover:bg-blue-600 transition"
@@ -281,7 +242,7 @@ const toggleComplete = (index) => {
             <div className="flex gap-4">
               <button
                 onClick={confirmDelete}
-                className="bg-green-500 text-black py-2 px-4 rounded-lg hover:bg-green-600 transition border border-green-400"
+                className="bg-green-500 text-black py-2 px-4 rounded-lg hover:bg-green-600 transition"
               >
                 Confirm
               </button>
