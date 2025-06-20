@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 
+const TARGET_TIME = 1800; // 30 minutes in seconds
+
 const StudyTracker = () => {
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem("tasks");
@@ -39,14 +41,13 @@ const StudyTracker = () => {
     setTaskPriority("Medium");
   };
 
-  const toggleComplete = (index) => {
-    setTasks(
-      tasks.map((task, i) =>
-        i === index - 1 ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-  
+const toggleComplete = (index) => {
+  setTasks(
+    tasks.map((task, i) =>
+      i === index ? { ...task, completed: !task.completed } : task
+    )
+  );
+};
 
   const startTimer = (index) => {
     setTasks(
@@ -119,9 +120,12 @@ const StudyTracker = () => {
 
   return (
     <div className="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 rounded-lg shadow-lg w-screen p-10">
-      <h1 className="text-3xl font-bold mb-6 text-center text-purple-800">Study Tracker</h1>
+<h1 className="text-3xl font-bold mb-6 text-center" style={{ color: '#6B21A8' }}>
+  Study Tracker
+</h1>
 
-      {/* Search Bar */}
+
+
       <input
         type="text"
         value={searchQuery}
@@ -151,7 +155,6 @@ const StudyTracker = () => {
           className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
 
-        {/* Task Priority */}
         <select
           value={taskPriority}
           onChange={(e) => setTaskPriority(e.target.value)}
@@ -170,7 +173,6 @@ const StudyTracker = () => {
         </button>
       </div>
 
-      {/* Sort Dropdown */}
       <div className="mb-6">
         <label className="text-gray-600 mr-2">Sort by: </label>
         <select
@@ -183,7 +185,6 @@ const StudyTracker = () => {
         </select>
       </div>
 
-      {/* Filter Dropdown */}
       <div className="mb-6">
         <label className="text-gray-600 mr-2">Filter by: </label>
         <select
@@ -197,7 +198,6 @@ const StudyTracker = () => {
         </select>
       </div>
 
-      {/* Task List with sorting */}
       <div className="space-y-6">
         {filteredTasks.map((task, index) => (
           <div
@@ -231,10 +231,25 @@ const StudyTracker = () => {
                 </button>
               </div>
             </div>
+
             {task.notes && <p className="text-gray-600">{task.notes}</p>}
             {task.dueDate && <p className="text-gray-600">Due: {task.dueDate}</p>}
             <p className="text-gray-600">Priority: {task.priority}</p>
             <p className="text-gray-600">Time Spent: {task.timeSpent} sec</p>
+
+            {/* ✅ Progress Bar */}
+            <div className="w-full bg-gray-300 rounded-full h-2.5">
+              <div
+                className="bg-green-500 h-2.5 rounded-full"
+                style={{
+                  width: `${Math.min((task.timeSpent / TARGET_TIME) * 100, 100)}%`,
+                }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600">
+              {Math.min(task.timeSpent, TARGET_TIME)} / {TARGET_TIME} seconds
+            </p>
+
             <div className="flex gap-3">
               {!task.timer ? (
                 <button
@@ -259,7 +274,6 @@ const StudyTracker = () => {
         ))}
       </div>
 
-      {/* Confirmation Dialog */}
       {isConfirmDialogVisible && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-10">
           <div className="bg-white p-6 rounded-lg shadow-lg">

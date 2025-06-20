@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -6,22 +9,32 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color:#2DAD5C;
+  background-color:#2DAD5C; /* lighter than #242424 */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+.my-heading{
+  color:#5c67ff;
+  text-align: center;
+   font-family: 'Pacifico', cursive;
+  font-size: 2.5rem;     /* Adjust as needed */
+  color: #4b0082;         /* Indigo color */
+  text-align: center;
+  margin-bottom: 1.5rem;
+
+}
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #7aa8ff; /* lighter link color */
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #aabfff; /* softer hover color */
 }
 
 body {
@@ -35,6 +48,7 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: #f1f1f1; /* ensure heading is visible */
 }
 
 button {
@@ -44,12 +58,13 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #3a3a3a; /* lighter button bg */
+  color: #ffffff;
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #aabfff;
 }
 button:focus,
 button:focus-visible {
@@ -58,13 +73,14 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: #1e1e1e;
+    background-color: #f9f9f9;
   }
   a:hover {
-    color: #747bff;
+    color: #5c67ff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: #e6e6e6;
+    color: #1e1e1e;
   }
 }
